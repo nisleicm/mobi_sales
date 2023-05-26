@@ -1,63 +1,50 @@
-version: '3.5'
+version: '3'
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    networks:
+      - bridge
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=base
+      - DB_USERNAME=root
+      - DB_PASSWORD=0Paulo123#
 
-    nginx:
-      image: ${COMPOSE_PROJECT_NAME}-nginx:latest
-      build:
-        context: ./docker/
-        args:
-          BUILD_ARGUMENT_ENV: prod
-        dockerfile: ./nginx/Dockerfile
-      container_name: ${COMPOSE_PROJECT_NAME}-nginx
-      restart: always
-      ports:
-        - "${WEB_PORT_HTTP}:80"
-        - "${WEB_PORT_SSL}:443"
-      volumes:
-        - ./:/var/www/html:ro,cached
-      depends_on:
-        - laravel
-      networks:
-        - smart
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - bridge
+    environment:
+      - MYSQL_ROOT_PASSWORD=0Paulo123#
+      - MYSQL_DATABASE=base
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=0Paulo123#
 
-    laravel: &laravel-template
-      image: ${COMPOSE_PROJECT_NAME}-laravel:latest
-      build:
-        context: .
-        args:
-          BUILD_ARGUMENT_ENV: prod
-          HOST_UID: ${HOST_UID}
-          HOST_GID: ${HOST_GID}
-        dockerfile: ./Dockerfile
-      container_name: ${COMPOSE_PROJECT_NAME}-laravel
-      restart: always
-      depends_on:
-        - mysql
-      networks:
-        - smart
-
-    ### Cron tasks
-    supervisord:
-      <<: *laravel-template
-      container_name: ${COMPOSE_PROJECT_NAME}-supervisord
-      expose: []
-      command: ["/usr/bin/supervisord"]
-
-    mysql:
-      image: mysql:8.0
-      platform: linux/x86_64
-      container_name: ${COMPOSE_PROJECT_NAME}-mysql
-      restart: always
-      command: --default-authentication-plugin=mysql_native_password --innodb-use-native-aio=${INNODB_USE_NATIVE_AIO:-1}
-      environment:
-        MYSQL_ROOT_PASSWORD: 0Paulo123#
-        MYSQL_DATABASE: base
-      volumes:
-        - ./storage/mysql-data:/var/lib/mysql:delegated
-      networks:
-        - smart
+  web:
+    image: nginx:latest
+    restart: unless-stopped
+    ports:
+      - 9080:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www/html
+    networks:
+      - bridge
 
 networks:
-  laravel:
-    name: smart
+  bridge:
+
+volumes:
+  db_data:
