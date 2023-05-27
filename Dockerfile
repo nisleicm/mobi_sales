@@ -18,7 +18,7 @@ RUN composer dump-autoload --no-scripts --no-dev --optimize
 FROM php:8.0-fpm AS final
 
 # Instala as extensões necessárias do PHP
-RUN apt-get update && apt-get install -y \
+RUN yum update && yum install -y \
     libonig-dev \
     libxml2-dev \
     zip \
